@@ -20,11 +20,30 @@ class CharType(Enum):
 def strToUnicode(value):
     value=value.decode("utf-8")
     value=value.replace(",","").replace(" ","").replace("，","")
-    return ''.join(value)
+    return value
 
 
 # 文本处理工具类
 class TextUtil:
+
+    # 得到停用词列表
+    @staticmethod
+    def getStopWords(filename):
+        fo = io.open(filename, "r", encoding="utf-8")
+        stopwords = set()
+
+        while True:
+            line = fo.readline()
+            line = line.decode("utf-8")
+            if not line:
+                break
+            stopword = line.replace("\n", "")
+            stopword="".join(stopword)
+            stopwords.add(stopword)
+
+        fo.close()
+
+        return stopwords
 
     # 输出字符的类型
     @staticmethod
@@ -69,13 +88,22 @@ class TextUtil:
         cop = re.compile(u"[^\u4e00-\u9fa5^\s\,\，^a-z^A-Z^0-9]")
         return cop.sub("", text)
 
-    # 过滤大于50个长度的文本
+    # 过滤大于20个长度的文本
     @staticmethod
     def filterText(text):
-        if len(text)>50:
+        if len(text)>20:
             return True
         else:
             return False
+
+    # 过滤一些关键字
+    @staticmethod
+    def filterKeyWord(keyword):
+        for stopword in TextUtil.stopwords:
+            if stopword in keyword:
+                return True
+        return False
+
 
     # 读出多行文本,只是进行了最基本的过滤操作
     @staticmethod
@@ -103,17 +131,25 @@ class TextUtil:
         keywords = []
         for i in range(2, n + 1):
             for j in range(0, len(text) - i):
-                keywords.append(''.join(text[j:j + i]))
+                keyword=text[j:j + i]
+                if TextUtil.filterKeyWord(keyword):
+                    continue
+                keywords.append(keyword)
         return keywords
 
     # 产生全部的关键字
     @staticmethod
     def generateKeyWords(filename):
+        stopwords=TextUtil.getStopWords("../config/stopword.txt")
+        TextUtil.stopwords=stopwords
         texts = TextUtil.getTexts(filename)
         keywords = []
         for i in range(len(texts)):
             text = TextUtil.splitText(texts[i])
-            keywords.extend(TextUtil.generateNgram(text, 5))
+            keywords.extend(TextUtil.generateNgram(text, 6))
 
+        #TODO 删除包含空格，逗号的关键字
         return keywords
 
+# keywords=TextUtil.generateKeyWords("../data/负样本评论.txt")
+# print(keywords)

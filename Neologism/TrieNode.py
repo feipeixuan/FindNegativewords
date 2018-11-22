@@ -8,7 +8,7 @@
 """
 
 
-# 单个节点
+# 单个节点（子元素+频数)
 class TrieNode(object):
     def __init__(self):
         self.data = {}
@@ -32,15 +32,6 @@ class Trie(object):
             node = node.data[letter]
             node.frequency += 1
 
-    # 查找一个关键词
-    def search(self, word):
-        node = self.root
-        for letter in word:
-            node = node.data.get(letter)
-            if not node:
-                return False
-        return True
-
     # 判断是否有这个前缀的字典
     def starts_with(self, prefix):
         node = self.root
@@ -50,24 +41,20 @@ class Trie(object):
                 return False
         return True
 
-    def get_start(self, prefix):
-        def _get_key(pre, pre_node):
-            words_list = []
-            if pre_node.is_word:
-                words_list.append(pre)
-            for x in pre_node.data.keys():
-                words_list.extend(_get_key(pre + str(x), pre_node.data.get(x)))
-            return words_list
-
-        words = []
+    # 得到以此为前缀的关键字
+    def get_starts_with(self,prefix):
+        words=[]
         if not self.starts_with(prefix):
             return words
-        if self.search(prefix):
-            words.append(prefix)
-            return words
-        node = self.root
-        for letter in prefix:
-            node = node.data.get(letter)
-        return _get_key(prefix, node)
+        else:
+            node=self.root
+            for letter in prefix:
+                node = node.data.get(letter)
+            return node
+
+# trie=Trie()
+# trie.insert(["11222","222"])
+# trie.insert(["333","222"])
+# print(trie.get_starts_with(["333"]))
 
 
