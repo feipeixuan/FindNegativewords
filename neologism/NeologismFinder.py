@@ -7,14 +7,15 @@
 # @Software: PyCharm
 """
 
-from config.TextUtil import TextUtil
+
 import io
 import math
 import sys
 
 reload(sys)
 sys.setdefaultencoding('utf8')
-from Neologism.TrieNode import Trie, TrieNode
+from util.TextUtil import TextUtil
+from neologism.TrieNode import Trie, TrieNode
 
 
 # 基于互信息和信息熵的新词发现器
@@ -46,12 +47,12 @@ class NeologismFinder:
 
     # 利用左右信息熵和互信息得到分数
     def computeScore(self):
-        scores={}
+        scores = {}
         for keyword in self.keywords:
-            keyword=list(keyword)
+            keyword = list(keyword)
 
-            keywordFrequency=self.prefixTrie.get_starts_with(keyword).frequency
-            if keywordFrequency <=20:
+            keywordFrequency = self.prefixTrie.get_starts_with(keyword).frequency
+            if keywordFrequency <= 20:
                 continue
 
             # 计算互信息
@@ -61,7 +62,7 @@ class NeologismFinder:
             for character in keyword:
                 sumProb *= self.characters[character] * 1.0 / self.countKeywords
 
-            mScore = keywordProb * math.log(keywordProb / sumProb,2)
+            mScore = keywordProb * math.log(keywordProb / sumProb, 2)
 
             # 计算左右信息熵，取较小值
 
@@ -73,8 +74,8 @@ class NeologismFinder:
                 for character in characters:
                     frequency += characters[character].frequency
                 for character in characters:
-                    prob=characters[character].frequency*1.0/frequency
-                elScore+=prob*math.log(prob,2)
+                    prob = characters[character].frequency * 1.0 / frequency
+                elScore += prob * math.log(prob, 2)
 
             keyword.reverse()
             lChild = self.suffixTrie.get_starts_with(keyword)
@@ -86,29 +87,51 @@ class NeologismFinder:
                     frequency += characters[character].frequency
                 for character in characters:
                     prob = characters[character].frequency * 1.0 / frequency
-                elScore += prob * math.log(prob,2)
+                erScore += prob * math.log(prob, 2)
 
-
-            eScore=min(elScore,erScore)
-            score=mScore+eScore
+            eScore = max(elScore,erScore)
+            score = mScore+eScore
             keyword.reverse()
-            scores[score]=keyword
+            scores[score] = keyword
 
         # 按照分数排序
         items = scores.items()
         items.sort()
         return [value for key, value in items]
 
-def main():
-    finder=NeologismFinder()
-    finder.constrcutTrie("../data/负样本评论.txt")
-    keywords=finder.computeScore()
-    file_object=io.open('../data/结果文件.txt','w',encoding="utf-8")
-    for keyword in  keywords:
-        if len(keyword)<2:
-            continue
-        line=''.join(keyword)
-        file_object.write(line+"\n")
+    # 产生有问题的词汇列表
+    def generateNegativeKeyWords(self,keywords):
+        negativeWords=[]
+        stopwords = TextUtil.getStopWords("../util/stopword.txt")
+        for keyword in keywords:
+            flag = True
+            for stopword in stopwords:
+                stopword = set(stopword)
+                if stopword.issubset(keyword):
+                    flag = False
+                    break
+            if not flag:
+                continue
+            for negativeWord in negativeWords:
+                tmpNegativeWord=set(negativeWord)
+                if tmpNegativeWord.issubset(keyword):
+                    negativeWords.remove(negativeWord)
+            negativeWords.append(keyword)
 
+        return  negativeWords
+
+
+def main():
+    finder = NeologismFinder()
+    finder.constrcutTrie("../data/负样本评论.txt")
+    keywords = finder.computeScore()
+    negativeKeyWords=finder.generateNegativeKeyWords(keywords)
+    file_object = io.open('../data/结果文件.txt', 'w', encoding="utf-8")
+
+    for negativeKeyWord in negativeKeyWords:
+        line = ''.join(negativeKeyWord)
+        if len(line) < 2 or len(negativeKeyWord)<2:
+            continue
+        file_object.write(line + " " + str(len(negativeKeyWord)) + "\n")
 
 main()

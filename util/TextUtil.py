@@ -38,10 +38,12 @@ class TextUtil:
             if not line:
                 break
             stopword = line.replace("\n", "")
-            stopword="".join(stopword)
+            stopword=tuple(stopword)
             stopwords.add(stopword)
 
         fo.close()
+        stopword = " ".decode("utf-8")
+        stopwords.add(tuple(stopword))
 
         return stopwords
 
@@ -132,21 +134,21 @@ class TextUtil:
         for i in range(2, n + 1):
             for j in range(0, len(text) - i):
                 keyword=text[j:j + i]
-                if TextUtil.filterKeyWord(keyword):
-                    continue
+                # if TextUtil.filterKeyWord(keyword):
+                #     continue
                 keywords.append(keyword)
         return keywords
 
     # 产生全部的关键字
     @staticmethod
     def generateKeyWords(filename):
-        stopwords=TextUtil.getStopWords("../config/stopword.txt")
-        TextUtil.stopwords=stopwords
+        # stopwords=TextUtil.getStopWords("../config/stopword.txt")
+        # TextUtil.stopwords=stopwords
         texts = TextUtil.getTexts(filename)
         keywords = []
         for i in range(len(texts)):
             text = TextUtil.splitText(texts[i])
-            keywords.extend(TextUtil.generateNgram(text, 6))
+            keywords.extend(TextUtil.generateNgram(text, 7))
 
         #TODO 删除包含空格，逗号的关键字
         return keywords

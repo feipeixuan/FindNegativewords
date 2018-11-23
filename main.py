@@ -10,7 +10,7 @@
 # @Software: PyCharm
 """
 
-from config.TextUtil import TextUtil
+from util.TextUtil import TextUtil
 import io
 import sys
 reload(sys)
